@@ -9,7 +9,9 @@
     { "src": "/js/(.*)", "dest": "/public/js/$1" },
     { "src": "/logo.svg", "dest": "/public/logo.svg" },
     { "src": "/favicon.ico", "dest": "/public/favicon.ico" },
-    { "src": "/login", "dest": "api/index.js" },
-    { "src": "/(.*)", "dest": "api/index.js" }
+    { "src": "/login", "dest": "/api/index.js" },
+    { "src": "/api/(.*)", "dest": "/api/index.js" },
+    { "src": "/", "dest": "/api/index.js" },
+    { "src": "/(.*)", "dest": "/api/index.js" }
   ]
 }

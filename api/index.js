@@ -7,14 +7,6 @@ const rateLimit = require('express-rate-limit');
 const { Pool } = require('pg');
 
 const app = express();
-const DATABASE_URL = process.env.DATABASE_URL || process.env.DATABASE_URL_POSTGRES_URL || process.env.POSTGRES_URL;
-
-if (!DATABASE_URL) {
-  throw new Error('DATABASE_URL environment variable is required');
-}
-
-const pool = new Pool({ connectionString: DATABASE_URL, connectionTimeoutMillis: 25000 });
-async function q(text, params) { return (await pool.query(text, params)).rows; }
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -41,12 +33,36 @@ function requireAuth(req, res, next) {
 
 function debtorRow(d) { return { ...d, products: JSON.parse(d.products || '[]'), payments: JSON.parse(d.payments || '[]') }; }
 
+let pool;
+
+async function getPool() {
+  if (!pool) {
+    const DATABASE_URL = process.env.DATABASE_URL || process.env.DATABASE_URL_POSTGRES_URL || process.env.POSTGRES_URL;
+    if (DATABASE_URL) {
+      pool = new Pool({ connectionString: DATABASE_URL, connectionTimeoutMillis: 10000 });
+      try {
+        await pool.query('SELECT 1');
+      } catch (e) {
+        console.error('DB connection failed:', e.message);
+      }
+    }
+  }
+  return pool;
+}
+
+async function q(text, params) {
+  const p = await getPool();
+  if (!p) return [];
+  return (await p.query(text, params)).rows;
+}
+
 async function initDB() {
   try {
-    await q('CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY, username TEXT UNIQUE NOT NULL, password TEXT NOT NULL)');
-    await q('CREATE TABLE IF NOT EXISTS inventory (id TEXT PRIMARY KEY, name TEXT NOT NULL, quantity INTEGER DEFAULT 0, price REAL DEFAULT 0, createdAt TEXT)');
-    await q('CREATE TABLE IF NOT EXISTS debtors (id TEXT PRIMARY KEY, name TEXT NOT NULL, amount REAL DEFAULT 0, description TEXT DEFAULT \'\', products TEXT DEFAULT \'[]\', dueDate TEXT, payments TEXT DEFAULT \'[]\', createdAt TEXT)');
-
+    const p = await getPool();
+    if (!p) return;
+    await p.query('CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY, username TEXT UNIQUE NOT NULL, password TEXT NOT NULL)');
+    await p.query('CREATE TABLE IF NOT EXISTS inventory (id TEXT PRIMARY KEY, name TEXT NOT NULL, quantity INTEGER DEFAULT 0, price REAL DEFAULT 0, createdAt TEXT)');
+    await p.query('CREATE TABLE IF NOT EXISTS debtors (id TEXT PRIMARY KEY, name TEXT NOT NULL, amount REAL DEFAULT 0, description TEXT DEFAULT \'\', products TEXT DEFAULT \'[]\', dueDate TEXT, payments TEXT DEFAULT \'[]\', createdAt TEXT)');
     const pwd = process.env.ADMIN_PASSWORD || ('MC-' + crypto.randomBytes(4).toString('hex').toUpperCase());
     const rows = await q('SELECT * FROM users WHERE username = $1', ['admin']);
     if (rows.length === 0) {
@@ -61,10 +77,10 @@ async function initDB() {
 }
 
 app.get('/api/debug-env', (req, res) => {
-  const dbUrlPreview = process.env.DATABASE_URL ? process.env.DATABASE_URL.substring(0, 20) + '...' : 'NOT SET';
-  const dbUrlPreview2 = process.env.DATABASE_URL_POSTGRES_URL ? process.env.DATABASE_URL_POSTGRES_URL.substring(0, 20) + '...' : 'NOT SET';
-  const dbUrlPreview3 = process.env.POSTGRES_URL ? process.env.POSTGRES_URL.substring(0, 20) + '...' : 'NOT SET';
-  res.json({ DATABASE_URL: dbUrlPreview, DATABASE_URL_POSTGRES_URL: dbUrlPreview2, POSTGRES_URL: dbUrlPreview3 });
+  const dbUrlPreview = process.env.DATABASE_URL ? 'SET' : 'NOT SET';
+  const dbUrlPreview2 = process.env.DATABASE_URL_POSTGRES_URL ? 'SET' : 'NOT SET';
+  const dbUrlPreview3 = process.env.POSTGRES_URL ? 'SET' : 'NOT SET';
+  res.json({ DATABASE_URL: dbUrlPreview, DATABASE_URL_POSTGRES_URL: dbUrlPreview2, POSTGRES_URL: dbUrlPreview3, poolExists: !!pool });
 });
 
 app.get('/login', (req, res) => {
@@ -228,10 +244,10 @@ app.delete('/api/inventory/:id', async (req, res) => { await q('DELETE FROM inve
 
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
-app.get('*', requireAuth, (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'index.html')));
-
-const serverless = require('serverless-http');
+app.get('*', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'index.html')));
 
 const initPromise = initDB();
 
-module.exports = serverless(app, { callbackWaitsForEmptyEventLoop: false });
+module.exports = (req, res) => {
+  app(req, res);
+};
