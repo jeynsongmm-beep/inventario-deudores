@@ -59,6 +59,15 @@ async function initDB() {
   } catch (e) { console.error('initDB error:', e.message); }
 }
 
+app.get('/api/keep-alive', async (req, res) => {
+  try {
+    await sql.query('SELECT 1');
+    res.json({ ok: true });
+  } catch (e) {
+    res.json({ ok: false, error: e.message });
+  }
+});
+
 app.get('/api/debug-env', (req, res) => {
   let host = 'NOT SET';
   if (dbUrl) {
