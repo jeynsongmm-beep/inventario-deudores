@@ -35,32 +35,20 @@ function debtorRow(d) { return { ...d, products: JSON.parse(d.products || '[]'),
 
 let pool;
 
-async function getPool() {
+let dbUrl;
+
+function getPool() {
   if (!pool) {
-    let DATABASE_URL = process.env.DATABASE_URL || process.env.DATABASE_URL_POSTGRES_URL || process.env.POSTGRES_URL;
-    if (!DATABASE_URL) {
-      const pgUser = process.env.DATABASE_URL_PGUSER;
-      const pgPass = process.env.DATABASE_URL_PGPASSWORD;
-      const pgHost = process.env.DATABASE_URL_PGHOST;
-      const pgDb = process.env.DATABASE_URL_PGDATABASE;
-      if (pgUser && pgPass && pgHost && pgDb) {
-        DATABASE_URL = `postgresql://${pgUser}:${pgPass}@${pgHost}/${pgDb}?sslmode=require`;
-      }
-    }
-    if (DATABASE_URL) {
-      pool = new Pool({ connectionString: DATABASE_URL, connectionTimeoutMillis: 15000 });
-      try {
-        await pool.query('SELECT 1');
-      } catch (e) {
-        console.error('DB connection failed:', e.message);
-      }
+    dbUrl = process.env.DATABASE_URL || process.env.DATABASE_URL_POSTGRES_URL || process.env.POSTGRES_URL;
+    if (dbUrl) {
+      pool = new Pool({ connectionString: dbUrl, connectionTimeoutMillis: 15000 });
     }
   }
   return pool;
 }
 
 async function q(text, params) {
-  const p = await getPool();
+  const p = getPool();
   if (!p) return [];
   return (await p.query(text, params)).rows;
 }
@@ -90,9 +78,10 @@ app.get('/api/debug-env', (req, res) => {
   const u2 = process.env.DATABASE_URL_POSTGRES_URL || '';
   const u3 = process.env.POSTGRES_URL || '';
   res.json({
-    DATABASE_URL: u1 ? u1.substring(0, 40) + '...' : 'NOT SET',
-    DATABASE_URL_POSTGRES_URL: u2 ? u2.substring(0, 40) + '...' : 'NOT SET',
-    POSTGRES_URL: u3 ? u3.substring(0, 40) + '...' : 'NOT SET',
+    DATABASE_URL: u1 ? u1.substring(0, 60) + '...' : 'NOT SET',
+    DATABASE_URL_POSTGRES_URL: u2 ? u2.substring(0, 60) + '...' : 'NOT SET',
+    POSTGRES_URL: u3 ? u3.substring(0, 60) + '...' : 'NOT SET',
+    dbUrl: dbUrl ? dbUrl.substring(0, 60) + '...' : 'NOT SET',
     poolExists: !!pool,
     vercelEnv: process.env.VERCEL_ENV
   });
