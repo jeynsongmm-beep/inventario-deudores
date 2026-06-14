@@ -4,7 +4,7 @@ const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const cookieSession = require('cookie-session');
 const rateLimit = require('express-rate-limit');
-const { Pool } = require('pg');
+const { neon } = require('@neondatabase/serverless');
 
 const app = express();
 
@@ -34,11 +34,11 @@ function requireAuth(req, res, next) {
 function debtorRow(d) { return { ...d, products: JSON.parse(d.products || '[]'), payments: JSON.parse(d.payments || '[]') }; }
 
 const dbUrl = process.env.DATABASE_URL || process.env.DATABASE_URL_POSTGRES_URL || process.env.POSTGRES_URL;
-const pool = dbUrl ? new Pool({ connectionString: dbUrl, ssl: { rejectUnauthorized: false }, connectionTimeoutMillis: 5000 }) : null;
+const sql = dbUrl ? neon(dbUrl) : null;
 
 async function q(text, params) {
-  if (!pool) return [];
-  return (await pool.query(text, params)).rows;
+  if (!sql) return [];
+  return await sql.query(text, params || []);
 }
 
 async function initDB() {
