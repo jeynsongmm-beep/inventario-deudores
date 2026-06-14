@@ -38,7 +38,7 @@ const sql = dbUrl ? neon(dbUrl) : null;
 
 async function q(text, params) {
   if (!sql) return [];
-  return await sql(text, params || []);
+  return await sql.query(text, params || []);
 }
 
 async function initDB() {
