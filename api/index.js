@@ -33,7 +33,7 @@ function requireAuth(req, res, next) {
 
 function debtorRow(d) { return { ...d, products: JSON.parse(d.products || '[]'), payments: JSON.parse(d.payments || '[]') }; }
 
-const dbUrl = process.env.DATABASE_URL || process.env.DATABASE_URL_POSTGRES_URL || process.env.POSTGRES_URL;
+const dbUrl = process.env.DATABASE_URL_POSTGRES_URL_NON_POOLING || process.env.DATABASE_URL_POSTGRES_URL || process.env.DATABASE_URL || process.env.POSTGRES_URL;
 const sql = dbUrl ? neon(dbUrl) : null;
 
 async function q(text, params) {
@@ -65,6 +65,18 @@ app.get('/api/debug-env', (req, res) => {
     try { const u = new URL(dbUrl); host = u.host; } catch { host = 'INVALID'; }
   }
   res.json({ dbUrl: dbUrl ? 'SET' : 'NOT SET', dbHost: host, vercelEnv: process.env.VERCEL_ENV, vercelRegion: process.env.VERCEL_REGION });
+});
+
+app.get('/api/db-check', async (req, res) => {
+  try {
+    const result = await Promise.race([
+      sql.query('SELECT 1 as ok'),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 8000))
+    ]);
+    res.json({ connected: true, result });
+  } catch (e) {
+    res.json({ connected: false, error: e.message });
+  }
 });
 
 app.get('/login', (req, res) => {
