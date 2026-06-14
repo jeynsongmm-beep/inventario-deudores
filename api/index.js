@@ -41,7 +41,7 @@ function requireAuth(req, res, next) {
 
 function debtorRow(d) { return { ...d, products: JSON.parse(d.products || '[]'), payments: JSON.parse(d.payments || '[]') }; }
 
-const initDB = (async () => {
+async function initDB() {
   try {
     await q('CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY, username TEXT UNIQUE NOT NULL, password TEXT NOT NULL)');
     await q('CREATE TABLE IF NOT EXISTS inventory (id TEXT PRIMARY KEY, name TEXT NOT NULL, quantity INTEGER DEFAULT 0, price REAL DEFAULT 0, createdAt TEXT)');
@@ -58,7 +58,7 @@ const initDB = (async () => {
       }
     }
   } catch (e) { console.error('initDB error:', e.message); }
-})();
+}
 
 app.get('/login', (req, res) => {
   if (req.session.userId) return res.redirect('/');
@@ -225,6 +225,6 @@ app.get('*', requireAuth, (req, res) => res.sendFile(path.join(__dirname, '..', 
 
 const serverless = require('serverless-http');
 
-let initPromise = initDB();
+const initPromise = initDB();
 
 module.exports = serverless(app, { callbackWaitsForEmptyEventLoop: false });
