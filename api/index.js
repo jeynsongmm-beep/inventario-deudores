@@ -50,11 +50,8 @@ async function initDB() {
     const rows = await q('SELECT * FROM users WHERE username = $1', ['admin']);
     if (rows.length === 0) {
       await q('INSERT INTO users (id, username, password) VALUES ($1, $2, $3)', [Date.now().toString(), 'admin', bcrypt.hashSync(pwd, 10)]);
-    } else {
-      const user = rows[0];
-      if (bcrypt.compareSync('admin', user.password) || process.env.ADMIN_PASSWORD) {
-        await q('UPDATE users SET password = $1 WHERE id = $2', [bcrypt.hashSync(pwd, 10), user.id]);
-      }
+    } else if (process.env.ADMIN_PASSWORD) {
+      await q('UPDATE users SET password = $1 WHERE id = $2', [bcrypt.hashSync(pwd, 10), rows[0].id]);
     }
   } catch (e) { console.error('initDB error:', e.message); }
 }
