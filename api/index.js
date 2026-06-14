@@ -4,7 +4,7 @@ const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const cookieSession = require('cookie-session');
 const rateLimit = require('express-rate-limit');
-const { Pool } = require('pg');
+const { neon } = require('@neondatabase/serverless');
 
 const app = express();
 
@@ -33,33 +33,24 @@ function requireAuth(req, res, next) {
 
 function debtorRow(d) { return { ...d, products: JSON.parse(d.products || '[]'), payments: JSON.parse(d.payments || '[]') }; }
 
-let pool;
-
-let dbUrl;
-
-function getPool() {
-  if (!pool) {
-    dbUrl = process.env.DATABASE_URL || process.env.DATABASE_URL_POSTGRES_URL || process.env.POSTGRES_URL;
-    if (dbUrl) {
-      pool = new Pool({ connectionString: dbUrl, connectionTimeoutMillis: 15000 });
-    }
-  }
-  return pool;
-}
+const dbUrl = process.env.DATABASE_URL || process.env.DATABASE_URL_POSTGRES_URL || process.env.POSTGRES_URL;
+const sql = dbUrl ? neon(dbUrl) : null;
 
 async function q(text, params) {
-  const p = getPool();
-  if (!p) return [];
-  return (await p.query(text, params)).rows;
+  if (!sql) return [];
+  try {
+    return await sql.query(text)(params || []);
+  } catch (e) {
+    console.error('DB error:', e.message);
+    throw e;
+  }
 }
 
 async function initDB() {
   try {
-    const p = await getPool();
-    if (!p) return;
-    await p.query('CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY, username TEXT UNIQUE NOT NULL, password TEXT NOT NULL)');
-    await p.query('CREATE TABLE IF NOT EXISTS inventory (id TEXT PRIMARY KEY, name TEXT NOT NULL, quantity INTEGER DEFAULT 0, price REAL DEFAULT 0, createdAt TEXT)');
-    await p.query('CREATE TABLE IF NOT EXISTS debtors (id TEXT PRIMARY KEY, name TEXT NOT NULL, amount REAL DEFAULT 0, description TEXT DEFAULT \'\', products TEXT DEFAULT \'[]\', dueDate TEXT, payments TEXT DEFAULT \'[]\', createdAt TEXT)');
+    await q('CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY, username TEXT UNIQUE NOT NULL, password TEXT NOT NULL)');
+    await q('CREATE TABLE IF NOT EXISTS inventory (id TEXT PRIMARY KEY, name TEXT NOT NULL, quantity INTEGER DEFAULT 0, price REAL DEFAULT 0, createdAt TEXT)');
+    await q('CREATE TABLE IF NOT EXISTS debtors (id TEXT PRIMARY KEY, name TEXT NOT NULL, amount REAL DEFAULT 0, description TEXT DEFAULT \'\', products TEXT DEFAULT \'[]\', dueDate TEXT, payments TEXT DEFAULT \'[]\', createdAt TEXT)');
     const pwd = process.env.ADMIN_PASSWORD || ('MC-' + crypto.randomBytes(4).toString('hex').toUpperCase());
     const rows = await q('SELECT * FROM users WHERE username = $1', ['admin']);
     if (rows.length === 0) {
@@ -74,17 +65,7 @@ async function initDB() {
 }
 
 app.get('/api/debug-env', (req, res) => {
-  const u1 = process.env.DATABASE_URL || '';
-  const u2 = process.env.DATABASE_URL_POSTGRES_URL || '';
-  const u3 = process.env.POSTGRES_URL || '';
-  res.json({
-    DATABASE_URL: u1 ? u1.substring(0, 60) + '...' : 'NOT SET',
-    DATABASE_URL_POSTGRES_URL: u2 ? u2.substring(0, 60) + '...' : 'NOT SET',
-    POSTGRES_URL: u3 ? u3.substring(0, 60) + '...' : 'NOT SET',
-    dbUrl: dbUrl ? dbUrl.substring(0, 60) + '...' : 'NOT SET',
-    poolExists: !!pool,
-    vercelEnv: process.env.VERCEL_ENV
-  });
+  res.json({ dbUrl: dbUrl ? 'SET' : 'NOT SET', vercelEnv: process.env.VERCEL_ENV });
 });
 
 app.get('/login', (req, res) => {
