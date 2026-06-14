@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>María Collection</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header>
+    <div class="header-content">
+      <img src="/logo.svg" alt="María Collection" class="header-logo">
+      <h1>María Collection</h1>
+      <button id="darkToggle" class="dark-toggle" title="Modo oscuro">☾</button>
+    </div>
+    <nav>
+      <button class="tab active" data-tab="debtors">Deudores</button>
+      <button class="tab" data-tab="debtor-list">Lista de Deudores</button>
+      <button class="tab" data-tab="inventory">Inventario</button>
+    </nav>
+  </header>
+
+  <main>
+    <section id="debtors" class="tab-content active">
+      <div class="form-card">
+        <h2>Registrar Deudor</h2>
+        <form id="debtorForm">
+          <input type="text" id="debtorName" placeholder="Nombre" required>
+          <div class="search-select" id="productSelect">
+            <input type="text" id="productSearch" placeholder="Buscar y agregar producto" autocomplete="off">
+            <div class="search-dropdown" id="productDropdown"></div>
+          </div>
+          <div id="selectedProducts" class="selected-products"></div>
+          <div class="multi-total">
+            <span class="info-label">Total productos:</span>
+            <span class="total-value" id="multiTotal">$0.00</span>
+          </div>
+          <input type="number" id="debtorAmount" placeholder="Monto de la deuda" step="0.01" required>
+          <input type="date" id="debtorDueDate">
+          <button type="submit">Agregar Deudor</button>
+        </form>
+      </div>
+    </section>
+
+    <section id="debtor-list" class="tab-content">
+      <div class="list-card">
+        <h2>Lista de Deudores</h2>
+        <input type="text" id="debtorSearch" placeholder="Buscar deudor..." class="search-input">
+        <div class="filter-bar" id="filterBar">
+          <button class="filter-btn active" data-filter="all">Todos</button>
+          <button class="filter-btn" data-filter="pending">Pendientes</button>
+          <button class="filter-btn" data-filter="paid">Pagados</button>
+          <button class="filter-btn" data-filter="overdue">Vencidos</button>
+        </div>
+        <div id="debtorList"></div>
+      </div>
+    </section>
+
+    <section id="inventory" class="tab-content">
+      <div class="form-card">
+        <h2>Agregar Producto</h2>
+        <form id="inventoryForm">
+          <input type="text" id="itemName" placeholder="Nombre del producto" required>
+          <input type="number" id="itemQuantity" placeholder="Cantidad" required>
+          <input type="number" id="itemPrice" placeholder="Precio" step="0.01">
+          <button type="submit">Agregar Producto</button>
+        </form>
+      </div>
+      <div class="list-card">
+        <h2>Inventario</h2>
+        <div id="inventoryList"></div>
+      </div>
+    </section>
+  </main>
+
+  <div id="editDebtorModal" class="modal-overlay" style="display:none">
+    <div class="modal-content">
+      <h3>Editar Deudor</h3>
+      <form id="editDebtorForm">
+        <input type="text" id="editDebtorName" placeholder="Nombre" required>
+        <input type="text" id="editDebtorDesc" placeholder="Descripción">
+        <input type="date" id="editDebtorDueDate">
+        <div class="search-select" id="editProductSelect">
+          <input type="text" id="editProductSearch" placeholder="Buscar y agregar producto" autocomplete="off">
+          <div class="search-dropdown" id="editProductDropdown"></div>
+        </div>
+        <div id="editSelectedProducts" class="selected-products"></div>
+        <div class="multi-total">
+          <span class="info-label">Total productos:</span>
+          <span class="total-value" id="editMultiTotal">$0.00</span>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-cancel" onclick="closeEditDebtorModal()">Cancelar</button>
+          <button type="submit">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <div id="historyModal" class="modal-overlay" style="display:none">
+    <div class="modal-content modal-lg">
+      <div class="modal-header">
+        <h3>Historial de Abonos</h3>
+        <button class="modal-close" onclick="closePayHistory()">&times;</button>
+      </div>
+      <div id="historyList"></div>
+    </div>
+  </div>
+  <div id="payModal" class="modal-overlay" style="display:none">
+    <div class="modal-content">
+      <h3>Registrar Abono</h3>
+      <input type="number" id="payAmount" placeholder="Monto del abono" step="0.01" style="font-size:1.2rem;font-weight:700">
+      <input type="text" id="payNote" placeholder="Nota (opcional)" style="margin-top:10px">
+      <div class="modal-actions" style="margin-top:12px">
+        <button type="button" class="btn-cancel" onclick="closePayModal()">Cancelar</button>
+        <button type="button" class="btn-pay" id="payConfirmBtn">Confirmar Abono</button>
+      </div>
+    </div>
+  </div>
+  <div id="editItemModal" class="modal-overlay" style="display:none">
+    <div class="modal-content">
+      <h3>Editar Producto</h3>
+      <form id="editItemForm">
+        <input type="text" id="editItemName" placeholder="Nombre" required>
+        <input type="number" id="editItemQty" placeholder="Cantidad" required>
+        <input type="number" id="editItemPrice" placeholder="Precio" step="0.01">
+        <div class="modal-actions">
+          <button type="button" class="btn-cancel" onclick="closeEditModal()">Cancelar</button>
+          <button type="submit">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <div id="toastContainer"></div>
+  <script src="/js/app.js"></script>
+</body>
+</html>

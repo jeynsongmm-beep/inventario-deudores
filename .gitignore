@@ -1,0 +1,8 @@
+node_modules
+data
+.env
+credenciales.txt
+tunnel-url.txt
+cloudflared.exe
+
+.vercel
