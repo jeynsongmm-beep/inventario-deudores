@@ -13,7 +13,7 @@ if (!DATABASE_URL) {
   throw new Error('DATABASE_URL environment variable is required');
 }
 
-const pool = new Pool({ connectionString: DATABASE_URL, ssl: { rejectUnauthorized: false } });
+const pool = new Pool({ connectionString: DATABASE_URL, connectionTimeoutMillis: 10000 });
 async function q(text, params) { return (await pool.query(text, params)).rows; }
 
 app.use(express.json());
