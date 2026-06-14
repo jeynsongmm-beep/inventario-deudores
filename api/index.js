@@ -13,7 +13,7 @@ if (!DATABASE_URL) {
   throw new Error('DATABASE_URL environment variable is required');
 }
 
-const pool = new Pool({ connectionString: DATABASE_URL, connectionTimeoutMillis: 10000 });
+const pool = new Pool({ connectionString: DATABASE_URL, connectionTimeoutMillis: 25000 });
 async function q(text, params) { return (await pool.query(text, params)).rows; }
 
 app.use(express.json());
@@ -59,6 +59,13 @@ async function initDB() {
     }
   } catch (e) { console.error('initDB error:', e.message); }
 }
+
+app.get('/api/debug-env', (req, res) => {
+  const dbUrlPreview = process.env.DATABASE_URL ? process.env.DATABASE_URL.substring(0, 20) + '...' : 'NOT SET';
+  const dbUrlPreview2 = process.env.DATABASE_URL_POSTGRES_URL ? process.env.DATABASE_URL_POSTGRES_URL.substring(0, 20) + '...' : 'NOT SET';
+  const dbUrlPreview3 = process.env.POSTGRES_URL ? process.env.POSTGRES_URL.substring(0, 20) + '...' : 'NOT SET';
+  res.json({ DATABASE_URL: dbUrlPreview, DATABASE_URL_POSTGRES_URL: dbUrlPreview2, POSTGRES_URL: dbUrlPreview3 });
+});
 
 app.get('/login', (req, res) => {
   if (req.session.userId) return res.redirect('/');
