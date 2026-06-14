@@ -37,9 +37,18 @@ let pool;
 
 async function getPool() {
   if (!pool) {
-    const DATABASE_URL = process.env.DATABASE_URL || process.env.DATABASE_URL_POSTGRES_URL || process.env.POSTGRES_URL;
+    let DATABASE_URL = process.env.DATABASE_URL || process.env.DATABASE_URL_POSTGRES_URL || process.env.POSTGRES_URL;
+    if (!DATABASE_URL) {
+      const pgUser = process.env.DATABASE_URL_PGUSER;
+      const pgPass = process.env.DATABASE_URL_PGPASSWORD;
+      const pgHost = process.env.DATABASE_URL_PGHOST;
+      const pgDb = process.env.DATABASE_URL_PGDATABASE;
+      if (pgUser && pgPass && pgHost && pgDb) {
+        DATABASE_URL = `postgresql://${pgUser}:${pgPass}@${pgHost}/${pgDb}?sslmode=require`;
+      }
+    }
     if (DATABASE_URL) {
-      pool = new Pool({ connectionString: DATABASE_URL, connectionTimeoutMillis: 10000 });
+      pool = new Pool({ connectionString: DATABASE_URL, connectionTimeoutMillis: 15000 });
       try {
         await pool.query('SELECT 1');
       } catch (e) {
@@ -77,10 +86,16 @@ async function initDB() {
 }
 
 app.get('/api/debug-env', (req, res) => {
-  const dbUrlPreview = process.env.DATABASE_URL ? 'SET' : 'NOT SET';
-  const dbUrlPreview2 = process.env.DATABASE_URL_POSTGRES_URL ? 'SET' : 'NOT SET';
-  const dbUrlPreview3 = process.env.POSTGRES_URL ? 'SET' : 'NOT SET';
-  res.json({ DATABASE_URL: dbUrlPreview, DATABASE_URL_POSTGRES_URL: dbUrlPreview2, POSTGRES_URL: dbUrlPreview3, poolExists: !!pool });
+  const u1 = process.env.DATABASE_URL || '';
+  const u2 = process.env.DATABASE_URL_POSTGRES_URL || '';
+  const u3 = process.env.POSTGRES_URL || '';
+  res.json({
+    DATABASE_URL: u1 ? u1.substring(0, 40) + '...' : 'NOT SET',
+    DATABASE_URL_POSTGRES_URL: u2 ? u2.substring(0, 40) + '...' : 'NOT SET',
+    POSTGRES_URL: u3 ? u3.substring(0, 40) + '...' : 'NOT SET',
+    poolExists: !!pool,
+    vercelEnv: process.env.VERCEL_ENV
+  });
 });
 
 app.get('/login', (req, res) => {
