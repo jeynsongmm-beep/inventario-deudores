@@ -147,7 +147,13 @@ app.put('/api/debtors/:id', async (req, res) => {
       for (const p of products) await q('UPDATE inventory SET quantity = quantity - $1 WHERE id = $2', [p.quantity, p.id]);
     }
     if (name != null) await q('UPDATE debtors SET name = $1 WHERE id = $2', [name, req.params.id]);
-    if (amount != null) await q('UPDATE debtors SET amount = $1 WHERE id = $2', [parseFloat(amount), req.params.id]);
+    if (products != null) {
+      const paid = JSON.parse(old.payments || '[]').reduce((s, p) => s + parseFloat(p.amount || 0), 0);
+      const productTotal = products.reduce((s, p) => s + (parseFloat(p.price) || 0) * (parseInt(p.quantity) || 0), 0);
+      await q('UPDATE debtors SET amount = $1 WHERE id = $2', [Math.max(0, productTotal - paid).toFixed(2), req.params.id]);
+    } else if (amount != null) {
+      await q('UPDATE debtors SET amount = $1 WHERE id = $2', [parseFloat(amount), req.params.id]);
+    }
     if (description != null) await q('UPDATE debtors SET description = $1 WHERE id = $2', [description, req.params.id]);
     if (products != null) await q('UPDATE debtors SET products = $1 WHERE id = $2', [JSON.stringify(products), req.params.id]);
     if (dueDate != null) await q('UPDATE debtors SET dueDate = $1 WHERE id = $2', [dueDate, req.params.id]);
