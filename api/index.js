@@ -38,7 +38,10 @@ const sql = dbUrl ? neon(dbUrl) : null;
 
 async function q(text, params) {
   if (!sql) return [];
-  return await sql.query(text, params || []);
+  return await Promise.race([
+    sql.query(text, params || []),
+    new Promise((_, reject) => setTimeout(() => reject(new Error('DB timeout')), 8000))
+  ]);
 }
 
 async function initDB() {
