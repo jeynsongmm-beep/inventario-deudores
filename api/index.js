@@ -69,10 +69,7 @@ app.get('/api/debug-env', (req, res) => {
 
 app.get('/api/db-check', async (req, res) => {
   try {
-    const result = await Promise.race([
-      sql.query('SELECT 1 as ok'),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 8000))
-    ]);
+    const result = await sql.query('SELECT 1 as ok');
     res.json({ connected: true, result });
   } catch (e) {
     res.json({ connected: false, error: e.message });
@@ -210,7 +207,12 @@ app.delete('/api/debtors/:id', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-app.get('/api/inventory', async (req, res) => { res.json(await q('SELECT * FROM inventory ORDER BY LOWER(name)')); });
+app.get('/api/inventory', async (req, res) => {
+  try {
+    const rows = await q('SELECT * FROM inventory ORDER BY LOWER(name)');
+    res.json(rows);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
 
 app.post('/api/inventory', async (req, res) => {
   try {
