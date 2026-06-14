@@ -60,7 +60,11 @@ async function initDB() {
 }
 
 app.get('/api/debug-env', (req, res) => {
-  res.json({ dbUrl: dbUrl ? 'SET' : 'NOT SET', vercelEnv: process.env.VERCEL_ENV });
+  let host = 'NOT SET';
+  if (dbUrl) {
+    try { const u = new URL(dbUrl); host = u.host; } catch { host = 'INVALID'; }
+  }
+  res.json({ dbUrl: dbUrl ? 'SET' : 'NOT SET', dbHost: host, vercelEnv: process.env.VERCEL_ENV, vercelRegion: process.env.VERCEL_REGION });
 });
 
 app.get('/login', (req, res) => {
