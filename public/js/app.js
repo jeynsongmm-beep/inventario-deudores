@@ -50,7 +50,6 @@ document.addEventListener('DOMContentLoaded', () => {
       tab.classList.add('active');
       document.getElementById(tab.dataset.tab).classList.add('active');
       if (tab.dataset.tab === 'debtors') refreshProductSearch();
-      if (tab.dataset.tab === 'rate') loadRate();
     });
   });
 
@@ -65,7 +64,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   loadDebtors();
   loadInventory();
-  loadRate();
   initProductSearch();
 
   document.getElementById('debtorForm').addEventListener('submit', async (e) => {
@@ -73,11 +71,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const name = document.getElementById('debtorName').value.trim();
     const amount = document.getElementById('debtorAmount').value;
     const dueDate = document.getElementById('debtorDueDate').value;
+    const rate = document.getElementById('debtorRate').value;
     const products = getSelectedProducts();
     if (!name || !amount) return;
     await fetch('/api/debtors', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, amount, products, dueDate })
+      body: JSON.stringify({ name, amount, rate, products, dueDate })
     });
     document.getElementById('debtorForm').reset();
     document.getElementById('selectedProducts').innerHTML = '';
@@ -125,12 +124,8 @@ function getSelectedProducts() {
 }
 
 async function loadDebtors() {
-  const [res, rateRes] = await Promise.all([
-    fetch('/api/debtors?_=' + Date.now()),
-    fetch('/api/rate')
-  ]);
+  const res = await fetch('/api/debtors?_=' + Date.now());
   let debtors = await res.json();
-  const { rate } = await rateRes.json();
   const nameFilter = (window.debtorFilter || '').toLowerCase();
   if (nameFilter) {
     debtors = debtors.filter(d => d.name.toLowerCase().includes(nameFilter));
@@ -164,7 +159,7 @@ async function loadDebtors() {
     return `<div class="debtor-card ${isOverdue ? 'overdue' : ''} ${d.amount <= 0 ? 'paid-off' : ''}">
       <div class="debtor-info">
         <span class="debtor-name">${esc(d.name)}</span>
-         <span class="debtor-amount ${d.amount <= 0 ? 'paid' : ''}">$${d.amount.toFixed(2)} <span class="amount-bs">= Bs ${fmt(d.amount * rate)}</span></span>
+         <span class="debtor-amount ${d.amount <= 0 ? 'paid' : ''}">$${d.amount.toFixed(2)} <span class="amount-bs">= Bs ${fmt(d.amount * (d.rate || 1))}</span></span>
        </div>
        ${d.dueDate ? `<div class="due-date ${isOverdue ? 'text-danger' : dueSoon ? 'text-warning' : ''}">Vence: ${new Date(d.dueDate).toLocaleDateString()}${isOverdue ? ' (VENCIDA)' : dueSoon ? ' (Pronto)' : ''}</div>` : ''}
        ${d.products && d.products.length > 0 ? `
@@ -188,7 +183,7 @@ async function loadDebtors() {
        return `<div class="debtor-card paid-off">
        <div class="debtor-info">
          <span class="debtor-name">${esc(d.name)}</span>
-         <span class="debtor-amount paid">$${d.amount.toFixed(2)} <span class="amount-bs">= Bs ${fmt(d.amount * rate)}</span></span>
+         <span class="debtor-amount paid">$${d.amount.toFixed(2)} <span class="amount-bs">= Bs ${fmt(d.amount * (d.rate || 1))}</span></span>
       </div>
       ${d.products && d.products.length > 0 ? `
         <div class="product-chips">
@@ -306,6 +301,7 @@ async function editDebtor(id) {
   document.getElementById('editDebtorName').value = d.name;
   document.getElementById('editDebtorDesc').value = d.description || '';
   document.getElementById('editDebtorDueDate').value = d.dueDate || '';
+  document.getElementById('editDebtorRate').value = d.rate || '';
   editSelectedItems.push(...(d.products || []).map(p => ({ ...p })));
   updateEditUI();
   document.getElementById('editDebtorModal').style.display = 'flex';
@@ -344,12 +340,13 @@ document.getElementById('editDebtorForm').addEventListener('submit', async (e) =
   const name = document.getElementById('editDebtorName').value.trim();
   const description = document.getElementById('editDebtorDesc').value.trim();
   const dueDate = document.getElementById('editDebtorDueDate').value;
+  const rate = document.getElementById('editDebtorRate').value;
   const products = editSelectedItems.map(i => ({ id: i.id, name: i.name, price: i.price, quantity: i.quantity }));
   if (!name) return;
   const totalFromProducts = products.reduce((sum, p) => sum + (p.price * p.quantity), 0);
   await fetch(`/api/debtors/${editingDebtorId}`, {
     method: 'PUT', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name, description: description || '', dueDate: dueDate || null, products, amount: totalFromProducts })
+    body: JSON.stringify({ name, description: description || '', dueDate: dueDate || null, rate: parseFloat(rate) || 1, products, amount: totalFromProducts })
   });
   closeEditDebtorModal();
   editSelectedItems.length = 0;
@@ -367,12 +364,8 @@ async function deleteDebtor(id) {
 }
 
 async function loadInventory() {
-  const [invRes, rateRes] = await Promise.all([
-    fetch('/api/inventory?_=' + Date.now()),
-    fetch('/api/rate')
-  ]);
+  const invRes = await fetch('/api/inventory?_=' + Date.now());
   const items = await invRes.json();
-  const { rate } = await rateRes.json();
   items.sort((a, b) => a.name.localeCompare(b.name, 'es'));
   const container = document.getElementById('inventoryList');
   if (!container) return;
@@ -386,7 +379,7 @@ async function loadInventory() {
         <span class="item-name">${esc(item.name)}</span>
         <span class="item-qty">Cant: ${item.quantity}</span>
       </div>
-      ${item.price ? `<div class="item-price">$${item.price.toFixed(2)} c/u <span class="item-price-bs">= Bs ${fmt(item.price * rate)}</span></div>` : ''}
+      ${item.price ? `<div class="item-price">$${item.price.toFixed(2)} c/u</div>` : ''}
       <div class="item-actions">
         <button class="btn-edit" onclick="editItem('${item.id}')">Editar</button>
         <button class="btn-delete" onclick="deleteItem('${item.id}')">Eliminar</button>
@@ -607,43 +600,6 @@ function closePayHistory() {
   document.getElementById('historyModal').style.display = 'none';
 }
 document.getElementById('historyModal').addEventListener('click', (e) => { if (e.target === e.currentTarget) closePayHistory(); });
-
-async function loadRate() {
-  try {
-    const [rateRes, totalsRes] = await Promise.all([
-      fetch('/api/rate'),
-      fetch('/api/debtors/totals')
-    ]);
-    const data = await rateRes.json();
-    const totals = await totalsRes.json();
-    const display = document.getElementById('rateDisplay');
-    const input = document.getElementById('dollarRate');
-    if (display) display.textContent = `1 USD = ${data.rate.toFixed(2)} Bs`;
-    if (input) input.value = data.rate;
-    const r = data.rate;
-    const pendingUSD = document.getElementById('totalPendingUSD');
-    const paidUSD = document.getElementById('totalPaidUSD');
-    const pendingBs = document.getElementById('totalPendingBs');
-    const paidBs = document.getElementById('totalPaidBs');
-    if (pendingUSD) pendingUSD.textContent = '$' + totals.totalPending.toFixed(2);
-    if (paidUSD) paidUSD.textContent = '$' + totals.totalPaid.toFixed(2);
-    if (pendingBs) pendingBs.textContent = 'Bs ' + fmt(totals.totalPending * r);
-    if (paidBs) paidBs.textContent = 'Bs ' + fmt(totals.totalPaid * r);
-  } catch {}
-}
-
-document.getElementById('rateForm')?.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const rate = document.getElementById('dollarRate').value;
-  if (!rate) return;
-  await fetch('/api/rate', {
-    method: 'PUT', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ rate: parseFloat(rate) })
-  });
-  loadRate();
-  loadInventory();
-  showToast('Tasa actualizada');
-});
 
 function showToast(message, type = 'success') {
   const container = document.getElementById('toastContainer');

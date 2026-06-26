@@ -31,7 +31,7 @@ function requireAuth(req, res, next) {
   next();
 }
 
-function debtorRow(d) { return { ...d, products: JSON.parse(d.products || '[]'), payments: JSON.parse(d.payments || '[]') }; }
+function debtorRow(d) { return { ...d, rate: d.rate || 1, products: JSON.parse(d.products || '[]'), payments: JSON.parse(d.payments || '[]') }; }
 
 const dbUrl = process.env.DATABASE_URL_POSTGRES_URL_NON_POOLING || process.env.DATABASE_URL_POSTGRES_URL || process.env.DATABASE_URL || process.env.POSTGRES_URL;
 const sql = dbUrl ? neon(dbUrl) : null;
@@ -46,8 +46,8 @@ async function initDB() {
     await q('CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY, username TEXT UNIQUE NOT NULL, password TEXT NOT NULL)');
     await q('CREATE TABLE IF NOT EXISTS inventory (id TEXT PRIMARY KEY, name TEXT NOT NULL, quantity INTEGER DEFAULT 0, price REAL DEFAULT 0, createdAt TEXT)');
     await q('CREATE TABLE IF NOT EXISTS debtors (id TEXT PRIMARY KEY, name TEXT NOT NULL, amount REAL DEFAULT 0, description TEXT DEFAULT \'\', products TEXT DEFAULT \'[]\', dueDate TEXT, payments TEXT DEFAULT \'[]\', createdAt TEXT)');
-    await q('CREATE TABLE IF NOT EXISTS config (key TEXT PRIMARY KEY, value TEXT)');
-    await q(`INSERT INTO config (key, value) VALUES ('dollar_rate', '1') ON CONFLICT (key) DO NOTHING`);
+    await q("ALTER TABLE debtors ADD COLUMN IF NOT EXISTS rate REAL DEFAULT 1");
+    await q('DROP TABLE IF EXISTS config');
     const pwd = process.env.ADMIN_PASSWORD || ('MC-' + crypto.randomBytes(4).toString('hex').toUpperCase());
     const rows = await q('SELECT * FROM users WHERE username = $1', ['admin']);
     if (rows.length === 0) {
@@ -113,45 +113,13 @@ app.get('/api/me', (req, res) => {
 
 app.use('/api', requireAuth);
 
-app.get('/api/rate', async (req, res) => {
-  try {
-    await q("CREATE TABLE IF NOT EXISTS config (key TEXT PRIMARY KEY, value TEXT)");
-    await q("INSERT INTO config (key, value) VALUES ('dollar_rate', '1') ON CONFLICT (key) DO NOTHING");
-    const rows = await q("SELECT value FROM config WHERE key = 'dollar_rate'");
-    res.json({ rate: parseFloat(rows[0]?.value || '1') });
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-app.put('/api/rate', async (req, res) => {
-  try {
-    const { rate } = req.body;
-    if (rate == null || isNaN(rate) || rate < 0) return res.status(400).json({ error: 'Tasa inválida' });
-    await q("CREATE TABLE IF NOT EXISTS config (key TEXT PRIMARY KEY, value TEXT)");
-    await q("INSERT INTO config (key, value) VALUES ('dollar_rate', '1') ON CONFLICT (key) DO NOTHING");
-    await q("UPDATE config SET value = $1 WHERE key = 'dollar_rate'", [parseFloat(rate).toFixed(2)]);
-    res.json({ rate: parseFloat(rate) });
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-app.get('/api/debtors/totals', async (req, res) => {
-  try {
-    const rows = await q("SELECT COALESCE(SUM(amount), 0) as totalPending FROM debtors WHERE amount > 0");
-    const all = await q('SELECT payments FROM debtors');
-    const totalPaid = all.reduce((s, d) => {
-      const p = JSON.parse(d.payments || '[]');
-      return s + p.reduce((a, b) => a + parseFloat(b.amount || 0), 0);
-    }, 0);
-    res.json({ totalPending: parseFloat(rows[0]?.totalpending || '0'), totalPaid });
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
 app.get('/api/debtors', async (req, res) => {
   res.json((await q('SELECT * FROM debtors ORDER BY LOWER(name)')).map(debtorRow));
 });
 
 app.post('/api/debtors', async (req, res) => {
   try {
-    const { name, amount, description, products, dueDate } = req.body;
+    const { name, amount, description, products, dueDate, rate } = req.body;
     if (!name || amount == null) return res.status(400).json({ error: 'Nombre y monto requeridos' });
     if (products && products.length > 0) {
       for (const p of products) {
@@ -160,15 +128,15 @@ app.post('/api/debtors', async (req, res) => {
       }
       for (const p of products) await q('UPDATE inventory SET quantity = quantity - $1 WHERE id = $2', [p.quantity, p.id]);
     }
-    const debtor = { id: Date.now().toString(), name, amount: parseFloat(amount), description: description || '', products: JSON.stringify(products || []), dueDate: dueDate || null, payments: '[]', createdAt: new Date().toISOString() };
-    await q('INSERT INTO debtors (id,name,amount,description,products,dueDate,payments,createdAt) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)', [debtor.id, debtor.name, debtor.amount, debtor.description, debtor.products, debtor.dueDate, debtor.payments, debtor.createdAt]);
+    const debtor = { id: Date.now().toString(), name, amount: parseFloat(amount), rate: parseFloat(rate) || 1, description: description || '', products: JSON.stringify(products || []), dueDate: dueDate || null, payments: '[]', createdAt: new Date().toISOString() };
+    await q('INSERT INTO debtors (id,name,amount,rate,description,products,dueDate,payments,createdAt) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)', [debtor.id, debtor.name, debtor.amount, debtor.rate, debtor.description, debtor.products, debtor.dueDate, debtor.payments, debtor.createdAt]);
     res.status(201).json(debtorRow(debtor));
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 app.put('/api/debtors/:id', async (req, res) => {
   try {
-    const { name, amount, description, products, dueDate } = req.body;
+    const { name, amount, description, products, dueDate, rate } = req.body;
     const rows = await q('SELECT * FROM debtors WHERE id = $1', [req.params.id]);
     if (!rows[0]) return res.status(404).json({ error: 'Deudor no encontrado' });
     const old = rows[0];
@@ -191,6 +159,7 @@ app.put('/api/debtors/:id', async (req, res) => {
     if (description != null) await q('UPDATE debtors SET description = $1 WHERE id = $2', [description, req.params.id]);
     if (products != null) await q('UPDATE debtors SET products = $1 WHERE id = $2', [JSON.stringify(products), req.params.id]);
     if (dueDate != null) await q('UPDATE debtors SET dueDate = $1 WHERE id = $2', [dueDate, req.params.id]);
+    if (rate != null) await q('UPDATE debtors SET rate = $1 WHERE id = $2', [parseFloat(rate), req.params.id]);
     res.json(debtorRow((await q('SELECT * FROM debtors WHERE id = $1', [req.params.id]))[0]));
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
