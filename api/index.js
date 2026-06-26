@@ -159,7 +159,7 @@ app.put('/api/debtors/:id', async (req, res) => {
     if (description != null) await q('UPDATE debtors SET description = $1 WHERE id = $2', [description, req.params.id]);
     if (products != null) await q('UPDATE debtors SET products = $1 WHERE id = $2', [JSON.stringify(products), req.params.id]);
     if (dueDate != null) await q('UPDATE debtors SET dueDate = $1 WHERE id = $2', [dueDate, req.params.id]);
-    if (rate != null) await q('UPDATE debtors SET rate = $1 WHERE id = $2', [parseFloat(rate), req.params.id]);
+    if (rate != null) await q('UPDATE debtors SET rate = $1 WHERE id = $2', [(parseFloat(rate) || 1).toFixed(2), req.params.id]);
     res.json(debtorRow((await q('SELECT * FROM debtors WHERE id = $1', [req.params.id]))[0]));
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
