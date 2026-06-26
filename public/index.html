@@ -34,7 +34,7 @@
           <div id="selectedProducts" class="selected-products"></div>
           <div class="multi-total">
             <span class="info-label">Total productos:</span>
-            <span class="total-value" id="multiTotal">$0.00</span>
+            <span class="total-value-lg" id="multiTotal">$0.00</span>
           </div>
           <input type="number" id="debtorAmount" placeholder="Monto de la deuda" step="0.01" required>
           <input type="date" id="debtorDueDate">
@@ -82,7 +82,7 @@
         </form>
         <div class="list-card" style="margin-top:16px;padding:14px;">
           <div style="text-align:center;">
-            <div id="rateDisplay" style="font-size:1.5rem;font-weight:700;color:var(--primary);">1 USD = 1.00 Bs</div>
+            <div id="rateDisplay" style="font-size:2rem;font-weight:700;color:var(--primary);">1 USD = 1.00 Bs</div>
             <div style="font-size:0.85rem;color:var(--text-secondary);margin-top:4px;">Tasa actual</div>
           </div>
         </div>
@@ -90,21 +90,21 @@
       <div class="list-card" style="margin-top:16px;">
         <h2>Totales</h2>
         <div style="padding:8px 0;">
-          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--card-border);">
-            <span style="font-weight:600;">Por cobrar (pendiente):</span>
-            <span id="totalPendingUSD" style="color:var(--danger);font-weight:700;">$0.00</span>
+          <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--card-border);">
+            <span style="font-weight:600;font-size:1rem;">Por cobrar (pendiente):</span>
+            <span id="totalPendingUSD" class="total-value-lg" style="color:var(--danger);">$0.00</span>
           </div>
-          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--card-border);">
-            <span style="font-weight:600;">Total abonado:</span>
-            <span id="totalPaidUSD" style="color:var(--success);font-weight:700;">$0.00</span>
+          <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--card-border);">
+            <span style="font-weight:600;font-size:1rem;">Total abonado:</span>
+            <span id="totalPaidUSD" class="total-value-lg" style="color:var(--success);">$0.00</span>
           </div>
-          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--card-border);">
-            <span style="font-weight:600;">Por cobrar (Bs):</span>
-            <span id="totalPendingBs" style="color:var(--danger);font-weight:700;">Bs 0.00</span>
+          <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--card-border);">
+            <span style="font-weight:600;font-size:1rem;">Por cobrar (Bs):</span>
+            <span id="totalPendingBs" class="total-value-lg" style="color:var(--danger);">Bs 0.00</span>
           </div>
-          <div style="display:flex;justify-content:space-between;padding:8px 0;">
-            <span style="font-weight:600;">Total abonado (Bs):</span>
-            <span id="totalPaidBs" style="color:var(--success);font-weight:700;">Bs 0.00</span>
+          <div style="display:flex;justify-content:space-between;padding:10px 0;">
+            <span style="font-weight:600;font-size:1rem;">Total abonado (Bs):</span>
+            <span id="totalPaidBs" class="total-value-lg" style="color:var(--success);">Bs 0.00</span>
           </div>
         </div>
       </div>
@@ -125,7 +125,7 @@
         <div id="editSelectedProducts" class="selected-products"></div>
         <div class="multi-total">
           <span class="info-label">Total productos:</span>
-          <span class="total-value" id="editMultiTotal">$0.00</span>
+          <span class="total-value-lg" id="editMultiTotal">$0.00</span>
         </div>
         <div class="modal-actions">
           <button type="button" class="btn-cancel" onclick="closeEditDebtorModal()">Cancelar</button>

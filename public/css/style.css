@@ -92,8 +92,9 @@ button:not(.tab):not(.filter-btn):not(.dark-toggle):not(.btn-remove):hover { bac
 .debtor-amount { color: var(--danger); font-weight: 700; font-size: 1.1rem; }
 .debtor-amount.paid { color: var(--success); }
 .item-qty { color: var(--text-secondary); }
-.item-price { color: var(--primary); font-weight: 600; }
-.item-price-bs { color: var(--success); font-size: 0.82rem; font-weight: 500; }
+.item-price { color: var(--primary); font-weight: 700; font-size: 1rem; }
+.item-price-bs { color: var(--success); font-size: 0.95rem; font-weight: 600; }
+.total-value-lg { font-size: 1.4rem; font-weight: 700; }
 
 .debtor-actions, .item-actions { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
 .debtor-actions input { flex: 1; padding: 8px; font-size: 0.9rem; }
@@ -136,7 +137,7 @@ button:not(.tab):not(.filter-btn):not(.dark-toggle):not(.btn-remove):hover { bac
 .btn-remove:hover { background: var(--danger-dark); }
 
 .multi-total { display: flex; justify-content: space-between; align-items: center; background: var(--total-bg); border-radius: 8px; padding: 10px 14px; font-size: 1rem; transition: background 0.3s; }
-.multi-total .total-value { color: var(--primary); font-size: 1.2rem; font-weight: 700; }
+.multi-total .total-value-lg { color: var(--primary); font-weight: 700; }
 
 .search-select { position: relative; }
 .search-select input { width: 100%; }
