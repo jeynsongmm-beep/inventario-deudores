@@ -91,7 +91,7 @@ button:not(.tab):not(.filter-btn):not(.dark-toggle):not(.btn-remove):hover { bac
 .debtor-name, .item-name { font-weight: 600; font-size: 1rem; }
 .debtor-amount { color: var(--danger); font-weight: 700; font-size: 1.1rem; }
 .debtor-amount.paid { color: var(--success); }
-.amount-bs { color: var(--success); font-size: 0.85rem; font-weight: 600; }
+.amount-bs { color: var(--success); font-size: 1rem; font-weight: 600; }
 .item-qty { color: var(--text-secondary); }
 .item-price { color: var(--primary); font-weight: 700; font-size: 1rem; }
 .item-price-bs { color: var(--success); font-size: 0.95rem; font-weight: 600; }
