@@ -115,6 +115,8 @@ app.use('/api', requireAuth);
 
 app.get('/api/rate', async (req, res) => {
   try {
+    await q("CREATE TABLE IF NOT EXISTS config (key TEXT PRIMARY KEY, value TEXT)");
+    await q("INSERT INTO config (key, value) VALUES ('dollar_rate', '1') ON CONFLICT (key) DO NOTHING");
     const rows = await q("SELECT value FROM config WHERE key = 'dollar_rate'");
     res.json({ rate: parseFloat(rows[0]?.value || '1') });
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -124,6 +126,8 @@ app.put('/api/rate', async (req, res) => {
   try {
     const { rate } = req.body;
     if (rate == null || isNaN(rate) || rate < 0) return res.status(400).json({ error: 'Tasa inválida' });
+    await q("CREATE TABLE IF NOT EXISTS config (key TEXT PRIMARY KEY, value TEXT)");
+    await q("INSERT INTO config (key, value) VALUES ('dollar_rate', '1') ON CONFLICT (key) DO NOTHING");
     await q("UPDATE config SET value = $1 WHERE key = 'dollar_rate'", [parseFloat(rate).toFixed(2)]);
     res.json({ rate: parseFloat(rate) });
   } catch (e) { res.status(500).json({ error: e.message }); }
