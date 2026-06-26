@@ -386,7 +386,7 @@ async function loadInventory() {
         <span class="item-name">${esc(item.name)}</span>
         <span class="item-qty">Cant: ${item.quantity}</span>
       </div>
-      ${item.price ? `<div class="item-price">$${item.price.toFixed(2)} c/u <span class="item-price-bs">= Bs ${(item.price * rate).toFixed(2)}</span></div>` : ''}
+      ${item.price ? `<div class="item-price">$${item.price.toFixed(2)} c/u <span class="item-price-bs">= Bs ${fmt(item.price * rate)}</span></div>` : ''}
       <div class="item-actions">
         <button class="btn-edit" onclick="editItem('${item.id}')">Editar</button>
         <button class="btn-delete" onclick="deleteItem('${item.id}')">Eliminar</button>
@@ -627,8 +627,8 @@ async function loadRate() {
     const paidBs = document.getElementById('totalPaidBs');
     if (pendingUSD) pendingUSD.textContent = '$' + totals.totalPending.toFixed(2);
     if (paidUSD) paidUSD.textContent = '$' + totals.totalPaid.toFixed(2);
-    if (pendingBs) pendingBs.textContent = 'Bs ' + (totals.totalPending * r).toFixed(2);
-    if (paidBs) paidBs.textContent = 'Bs ' + (totals.totalPaid * r).toFixed(2);
+    if (pendingBs) pendingBs.textContent = 'Bs ' + fmt(totals.totalPending * r);
+    if (paidBs) paidBs.textContent = 'Bs ' + fmt(totals.totalPaid * r);
   } catch {}
 }
 
