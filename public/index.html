@@ -76,8 +76,16 @@
 
     <section id="totales" class="tab-content">
       <div class="list-card">
-        <h2>Resumen en Bs</h2>
+        <h2>Totales</h2>
         <div style="padding:8px 0;">
+          <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--card-border);">
+            <span style="font-weight:600;font-size:1rem;">Total pendiente ($):</span>
+            <span id="totalPendingUSDAll" class="total-value-lg" style="color:var(--danger);">$0</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--card-border);">
+            <span style="font-weight:600;font-size:1rem;">Total abonado ($):</span>
+            <span id="totalPaidUSDAll" class="total-value-lg" style="color:var(--success);">$0</span>
+          </div>
           <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--card-border);">
             <span style="font-weight:600;font-size:1rem;">Total pendiente (Bs):</span>
             <span id="totalPendingBsAll" class="total-value-lg" style="color:var(--danger);">Bs 0</span>

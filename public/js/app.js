@@ -640,17 +640,19 @@ async function loadTotales() {
   try {
     const res = await fetch('/api/debtors?_=' + Date.now());
     const debtors = await res.json();
-    let totalPendingBs = 0, totalPaidBs = 0;
+    let totalPendingUsd = 0, totalPaidUsd = 0, totalPendingBs = 0, totalPaidBs = 0;
     const rows = debtors.map(d => {
       const rate = d.rate || 1;
       const paid = (d.payments || []).reduce((s, p) => s + parseFloat(p.amount || 0), 0);
       const pending = Math.max(0, d.amount);
-      const pendingBs = pending * rate;
-      const paidBs = paid * rate;
-      totalPendingBs += pendingBs;
-      totalPaidBs += paidBs;
-      return { name: d.name, pending, paid, pendingBs, paidBs };
+      totalPendingUsd += pending;
+      totalPaidUsd += paid;
+      totalPendingBs += pending * rate;
+      totalPaidBs += paid * rate;
+      return { name: d.name, pending, paid, pendingBs: pending * rate, paidBs: paid * rate };
     });
+    document.getElementById('totalPendingUSDAll').textContent = '$' + s(totalPendingUsd);
+    document.getElementById('totalPaidUSDAll').textContent = '$' + s(totalPaidUsd);
     document.getElementById('totalPendingBsAll').textContent = 'Bs ' + fmt(totalPendingBs);
     document.getElementById('totalPaidBsAll').textContent = 'Bs ' + fmt(totalPaidBs);
     const container = document.getElementById('totalesList');
