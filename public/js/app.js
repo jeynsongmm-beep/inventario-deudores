@@ -50,6 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
       tab.classList.add('active');
       document.getElementById(tab.dataset.tab).classList.add('active');
       if (tab.dataset.tab === 'debtors') refreshProductSearch();
+      if (tab.dataset.tab === 'totales') loadTotales();
     });
   });
 
@@ -635,6 +636,46 @@ function closePayHistory() {
 }
 document.getElementById('historyModal').addEventListener('click', (e) => { if (e.target === e.currentTarget) closePayHistory(); });
 
+async function loadTotales() {
+  try {
+    const res = await fetch('/api/debtors?_=' + Date.now());
+    const debtors = await res.json();
+    let totalPendingBs = 0, totalPaidBs = 0;
+    const rows = debtors.map(d => {
+      const rate = d.rate || 1;
+      const paid = (d.payments || []).reduce((s, p) => s + parseFloat(p.amount || 0), 0);
+      const pending = Math.max(0, d.amount);
+      const pendingBs = pending * rate;
+      const paidBs = paid * rate;
+      totalPendingBs += pendingBs;
+      totalPaidBs += paidBs;
+      return { name: d.name, pending, paid, pendingBs, paidBs };
+    });
+    document.getElementById('totalPendingBsAll').textContent = 'Bs ' + fmt(totalPendingBs);
+    document.getElementById('totalPaidBsAll').textContent = 'Bs ' + fmt(totalPaidBs);
+    const container = document.getElementById('totalesList');
+    if (rows.length === 0) {
+      container.innerHTML = '<div class="empty">No hay deudores</div>';
+      return;
+    }
+    container.innerHTML = rows.map(d => `
+      <div class="debtor-card" style="border-left-color:${d.pending > 0 ? 'var(--danger)' : 'var(--success)'}">
+        <div class="debtor-info" style="flex-direction:column;align-items:stretch;gap:4px">
+          <span class="debtor-name">${esc(d.name)}</span>
+          <div style="display:flex;justify-content:space-between;font-size:0.9rem">
+            <span style="color:var(--text-secondary)">Pendiente:</span>
+            <span style="color:var(--danger);font-weight:600">$${s(d.pending)} / Bs ${fmt(d.pendingBs)}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:0.9rem">
+            <span style="color:var(--text-secondary)">Abonado:</span>
+            <span style="color:var(--success);font-weight:600">$${s(d.paid)} / Bs ${fmt(d.paidBs)}</span>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  } catch (e) { console.error('loadTotales error:', e); }
+}
+
 function showToast(message, type = 'success') {
   const container = document.getElementById('toastContainer');
   if (!container) return;
@@ -650,6 +691,7 @@ function showToast(message, type = 'success') {
   }, 2500);
 }
 
+function s(n) { return n.toFixed(2).replace(/\.00$/, ''); }
 function fmt(n) {
   return n.toLocaleString('es-VE', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 }

@@ -17,6 +17,7 @@
       <button class="tab active" data-tab="debtors">Deudores</button>
       <button class="tab" data-tab="debtor-list">Lista de Deudores</button>
       <button class="tab" data-tab="inventory">Inventario</button>
+      <button class="tab" data-tab="totales">Totales</button>
     </nav>
   </header>
 
@@ -70,6 +71,26 @@
       <div class="list-card">
         <h2>Inventario</h2>
         <div id="inventoryList"></div>
+      </div>
+    </section>
+
+    <section id="totales" class="tab-content">
+      <div class="list-card">
+        <h2>Resumen en Bs</h2>
+        <div style="padding:8px 0;">
+          <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--card-border);">
+            <span style="font-weight:600;font-size:1rem;">Total pendiente (Bs):</span>
+            <span id="totalPendingBsAll" class="total-value-lg" style="color:var(--danger);">Bs 0</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:10px 0;">
+            <span style="font-weight:600;font-size:1rem;">Total abonado (Bs):</span>
+            <span id="totalPaidBsAll" class="total-value-lg" style="color:var(--success);">Bs 0</span>
+          </div>
+        </div>
+      </div>
+      <div class="list-card">
+        <h2>Deudores</h2>
+        <div id="totalesList"></div>
       </div>
     </section>
   </main>
