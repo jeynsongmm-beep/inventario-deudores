@@ -173,6 +173,7 @@ async function loadDebtors() {
           <button class="btn-edit" onclick="editDebtor('${d.id}')">✎ Editar</button>
           <button class="btn-delete" onclick="deleteDebtor('${d.id}')">✕ Eliminar</button>
           <button class="btn-view" onclick="showPayHistory('${d.id}')">≡ Abonos</button>
+          <button class="btn-rate" onclick="showRateModal('${d.id}')">💰 Tasa</button>
         </div>
       </div>`;
       }).join('');
@@ -193,6 +194,7 @@ async function loadDebtors() {
       <div class="debtor-actions">
         <button class="btn-delete" onclick="deleteDebtor('${d.id}')">Eliminar</button>
         <button class="btn-view" onclick="showPayHistory('${d.id}')">Ver Abonos</button>
+        <button class="btn-rate" onclick="showRateModal('${d.id}')">💰 Tasa</button>
       </div>
     </div>`;
     }).join('');
@@ -201,6 +203,38 @@ async function loadDebtors() {
 }
 
 let payingDebtorId = null;
+let rateEditingDebtorId = null;
+
+function showRateModal(id) {
+  rateEditingDebtorId = id;
+  fetch('/api/debtors').then(r => r.json()).then(debtors => {
+    const d = debtors.find(x => x.id === id);
+    if (!d) return;
+    document.getElementById('rateModalDebtorName').textContent = d.name;
+    document.getElementById('rateModalInput').value = d.rate || 1;
+    document.getElementById('rateModal').style.display = 'flex';
+    setTimeout(() => document.getElementById('rateModalInput').focus(), 100);
+  });
+}
+
+function closeRateModal() {
+  document.getElementById('rateModal').style.display = 'none';
+  rateEditingDebtorId = null;
+}
+document.getElementById('rateModal')?.addEventListener('click', (e) => { if (e.target === e.currentTarget) closeRateModal(); });
+
+document.getElementById('rateModalSaveBtn')?.addEventListener('click', async () => {
+  if (!rateEditingDebtorId) return;
+  const rate = parseFloat(document.getElementById('rateModalInput').value);
+  if (!rate || rate <= 0) return;
+  await fetch(`/api/debtors/${rateEditingDebtorId}`, {
+    method: 'PUT', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ rate })
+  });
+  closeRateModal();
+  loadDebtors();
+  showToast('Tasa actualizada');
+});
 
 function showPayModal(id) {
   payingDebtorId = id;

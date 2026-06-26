@@ -118,6 +118,17 @@
       </div>
     </div>
   </div>
+  <div id="rateModal" class="modal-overlay" style="display:none">
+    <div class="modal-content">
+      <h3>Editar tasa de cambio</h3>
+      <p id="rateModalDebtorName" style="font-weight:600;margin-bottom:12px;color:var(--primary);"></p>
+      <input type="number" id="rateModalInput" placeholder="Tasa Bs/USD" step="0.01" style="font-size:1.2rem;font-weight:700">
+      <div class="modal-actions" style="margin-top:12px">
+        <button type="button" class="btn-cancel" onclick="closeRateModal()">Cancelar</button>
+        <button type="button" class="btn-rate" id="rateModalSaveBtn">Guardar Tasa</button>
+      </div>
+    </div>
+  </div>
   <div id="editItemModal" class="modal-overlay" style="display:none">
     <div class="modal-content">
       <h3>Editar Producto</h3>
