@@ -133,6 +133,18 @@ app.put('/api/rate', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+app.get('/api/debtors/totals', async (req, res) => {
+  try {
+    const rows = await q("SELECT COALESCE(SUM(amount), 0) as totalPending FROM debtors WHERE amount > 0");
+    const all = await q('SELECT payments FROM debtors');
+    const totalPaid = all.reduce((s, d) => {
+      const p = JSON.parse(d.payments || '[]');
+      return s + p.reduce((a, b) => a + parseFloat(b.amount || 0), 0);
+    }, 0);
+    res.json({ totalPending: parseFloat(rows[0]?.totalpending || '0'), totalPaid });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 app.get('/api/debtors', async (req, res) => {
   res.json((await q('SELECT * FROM debtors ORDER BY LOWER(name)')).map(debtorRow));
 });

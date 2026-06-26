@@ -50,6 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
       tab.classList.add('active');
       document.getElementById(tab.dataset.tab).classList.add('active');
       if (tab.dataset.tab === 'debtors') refreshProductSearch();
+      if (tab.dataset.tab === 'rate') loadRate();
     });
   });
 
@@ -605,12 +606,25 @@ document.getElementById('historyModal').addEventListener('click', (e) => { if (e
 
 async function loadRate() {
   try {
-    const res = await fetch('/api/rate');
-    const data = await res.json();
+    const [rateRes, totalsRes] = await Promise.all([
+      fetch('/api/rate'),
+      fetch('/api/debtors/totals')
+    ]);
+    const data = await rateRes.json();
+    const totals = await totalsRes.json();
     const display = document.getElementById('rateDisplay');
     const input = document.getElementById('dollarRate');
     if (display) display.textContent = `1 USD = ${data.rate.toFixed(2)} Bs`;
     if (input) input.value = data.rate;
+    const r = data.rate;
+    const pendingUSD = document.getElementById('totalPendingUSD');
+    const paidUSD = document.getElementById('totalPaidUSD');
+    const pendingBs = document.getElementById('totalPendingBs');
+    const paidBs = document.getElementById('totalPaidBs');
+    if (pendingUSD) pendingUSD.textContent = '$' + totals.totalPending.toFixed(2);
+    if (paidUSD) paidUSD.textContent = '$' + totals.totalPaid.toFixed(2);
+    if (pendingBs) pendingBs.textContent = 'Bs ' + (totals.totalPending * r).toFixed(2);
+    if (paidBs) paidBs.textContent = 'Bs ' + (totals.totalPaid * r).toFixed(2);
   } catch {}
 }
 
