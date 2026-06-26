@@ -38,7 +38,7 @@
           </div>
           <input type="number" id="debtorAmount" placeholder="Monto de la deuda" step="0.01" required>
           <input type="date" id="debtorDueDate">
-          <input type="number" id="debtorRate" placeholder="Tasa Bs/USD (opcional)" step="0.01" value="1">
+          <input type="number" id="debtorRate" placeholder="Tasa" step="0.01" value="1">
           <button type="submit">Agregar Deudor</button>
         </form>
       </div>
@@ -102,7 +102,7 @@
         <input type="text" id="editDebtorName" placeholder="Nombre" required>
         <input type="text" id="editDebtorDesc" placeholder="Descripción">
         <input type="date" id="editDebtorDueDate">
-        <input type="number" id="editDebtorRate" placeholder="Tasa Bs/USD" step="0.01">
+        <input type="number" id="editDebtorRate" placeholder="Tasa" step="0.01">
         <div class="search-select" id="editProductSelect">
           <input type="text" id="editProductSearch" placeholder="Buscar y agregar producto" autocomplete="off">
           <div class="search-dropdown" id="editProductDropdown"></div>
@@ -143,7 +143,7 @@
     <div class="modal-content">
       <h3>Editar tasa de cambio</h3>
       <p id="rateModalDebtorName" style="font-weight:600;margin-bottom:12px;color:var(--primary);"></p>
-      <input type="number" id="rateModalInput" placeholder="Tasa Bs/USD" step="0.01" style="font-size:1.2rem;font-weight:700">
+      <input type="number" id="rateModalInput" placeholder="Tasa" step="0.01" style="font-size:1.2rem;font-weight:700">
       <div class="modal-actions" style="margin-top:12px">
         <button type="button" class="btn-cancel" onclick="closeRateModal()">Cancelar</button>
         <button type="button" class="btn-rate" id="rateModalSaveBtn">Guardar Tasa</button>
