@@ -156,34 +156,34 @@ async function loadDebtors() {
     html += pending.map(d => {
     const isOverdue = d.dueDate && new Date(d.dueDate) < today && d.amount > 0;
     const dueSoon = d.dueDate && !isOverdue && (new Date(d.dueDate) - today) / 86400000 <= 3 && d.amount > 0;
-    return `<div class="debtor-card ${isOverdue ? 'overdue' : ''} ${d.amount <= 0 ? 'paid-off' : ''}">
-      <div class="debtor-info">
-        <span class="debtor-name">${esc(d.name)}</span>
-         <span class="debtor-amount ${d.amount <= 0 ? 'paid' : ''}">$${d.amount.toFixed(2)} <span class="amount-bs">= Bs ${fmt(d.amount * (d.rate || 1))}</span></span>
-       </div>
-       ${d.dueDate ? `<div class="due-date ${isOverdue ? 'text-danger' : dueSoon ? 'text-warning' : ''}">Vence: ${new Date(d.dueDate).toLocaleDateString()}${isOverdue ? ' (VENCIDA)' : dueSoon ? ' (Pronto)' : ''}</div>` : ''}
-       ${d.products && d.products.length > 0 ? `
-         <div class="product-chips">
-           ${d.products.map(p => `<span class="product-chip">${esc(p.name)} x${p.quantity} - $${(p.price * p.quantity).toFixed(2)}</span>`).join('')}
-         </div>
-       ` : ''}
-       ${d.description ? `<div style="color:var(--text-secondary);font-size:0.85rem;margin-top:6px">${esc(d.description)}</div>` : ''}
-       <div class="debtor-actions">
-         <button class="btn-pay" onclick="showPayModal('${d.id}')">⊕ Abonar</button>
-         <button class="btn-edit" onclick="editDebtor('${d.id}')">✎ Editar</button>
-         <button class="btn-delete" onclick="deleteDebtor('${d.id}')">✕ Eliminar</button>
-         <button class="btn-view" onclick="showPayHistory('${d.id}')">≡ Abonos</button>
-       </div>
-     </div>`;
-     }).join('');
-   }
-   if (paid.length > 0) {
-     html += '<div class="section-label" style="margin-top:16px">Pagados</div>';
-     html += paid.map(d => {
-       return `<div class="debtor-card paid-off">
+     return `<div class="debtor-card ${isOverdue ? 'overdue' : ''} ${d.amount <= 0 ? 'paid-off' : ''}">
        <div class="debtor-info">
-         <span class="debtor-name">${esc(d.name)}</span>
-         <span class="debtor-amount paid">$${d.amount.toFixed(2)} <span class="amount-bs">= Bs ${fmt(d.amount * (d.rate || 1))}</span></span>
+         <span class="debtor-name">${esc(d.name)} <span class="debtor-rate">(${(d.rate || 1).toFixed(2)})</span></span>
+          <span class="debtor-amount ${d.amount <= 0 ? 'paid' : ''}">$${d.amount.toFixed(2)} <span class="amount-bs">= Bs ${fmt(d.amount * (d.rate || 1))}</span></span>
+        </div>
+        ${d.dueDate ? `<div class="due-date ${isOverdue ? 'text-danger' : dueSoon ? 'text-warning' : ''}">Vence: ${new Date(d.dueDate).toLocaleDateString()}${isOverdue ? ' (VENCIDA)' : dueSoon ? ' (Pronto)' : ''}</div>` : ''}
+        ${d.products && d.products.length > 0 ? `
+          <div class="product-chips">
+            ${d.products.map(p => `<span class="product-chip">${esc(p.name)} x${p.quantity} - $${(p.price * p.quantity).toFixed(2)}</span>`).join('')}
+          </div>
+        ` : ''}
+        ${d.description ? `<div style="color:var(--text-secondary);font-size:0.85rem;margin-top:6px">${esc(d.description)}</div>` : ''}
+        <div class="debtor-actions">
+          <button class="btn-pay" onclick="showPayModal('${d.id}')">⊕ Abonar</button>
+          <button class="btn-edit" onclick="editDebtor('${d.id}')">✎ Editar</button>
+          <button class="btn-delete" onclick="deleteDebtor('${d.id}')">✕ Eliminar</button>
+          <button class="btn-view" onclick="showPayHistory('${d.id}')">≡ Abonos</button>
+        </div>
+      </div>`;
+      }).join('');
+    }
+    if (paid.length > 0) {
+      html += '<div class="section-label" style="margin-top:16px">Pagados</div>';
+      html += paid.map(d => {
+        return `<div class="debtor-card paid-off">
+        <div class="debtor-info">
+          <span class="debtor-name">${esc(d.name)} <span class="debtor-rate">(${(d.rate || 1).toFixed(2)})</span></span>
+          <span class="debtor-amount paid">$${d.amount.toFixed(2)} <span class="amount-bs">= Bs ${fmt(d.amount * (d.rate || 1))}</span></span>
       </div>
       ${d.products && d.products.length > 0 ? `
         <div class="product-chips">
