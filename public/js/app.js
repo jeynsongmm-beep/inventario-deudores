@@ -164,7 +164,7 @@ async function loadDebtors() {
     return `<div class="debtor-card ${isOverdue ? 'overdue' : ''} ${d.amount <= 0 ? 'paid-off' : ''}">
       <div class="debtor-info">
         <span class="debtor-name">${esc(d.name)}</span>
-         <span class="debtor-amount ${d.amount <= 0 ? 'paid' : ''}">$${d.amount.toFixed(2)} <span class="amount-bs">= Bs ${(d.amount * rate).toFixed(2)}</span></span>
+         <span class="debtor-amount ${d.amount <= 0 ? 'paid' : ''}">$${d.amount.toFixed(2)} <span class="amount-bs">= Bs ${fmt(d.amount * rate)}</span></span>
        </div>
        ${d.dueDate ? `<div class="due-date ${isOverdue ? 'text-danger' : dueSoon ? 'text-warning' : ''}">Vence: ${new Date(d.dueDate).toLocaleDateString()}${isOverdue ? ' (VENCIDA)' : dueSoon ? ' (Pronto)' : ''}</div>` : ''}
        ${d.products && d.products.length > 0 ? `
@@ -188,7 +188,7 @@ async function loadDebtors() {
        return `<div class="debtor-card paid-off">
        <div class="debtor-info">
          <span class="debtor-name">${esc(d.name)}</span>
-         <span class="debtor-amount paid">$${d.amount.toFixed(2)} <span class="amount-bs">= Bs ${(d.amount * rate).toFixed(2)}</span></span>
+         <span class="debtor-amount paid">$${d.amount.toFixed(2)} <span class="amount-bs">= Bs ${fmt(d.amount * rate)}</span></span>
       </div>
       ${d.products && d.products.length > 0 ? `
         <div class="product-chips">
@@ -660,6 +660,9 @@ function showToast(message, type = 'success') {
   }, 2500);
 }
 
+function fmt(n) {
+  return n.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
 function esc(str) {
   const div = document.createElement('div');
   div.textContent = str;
