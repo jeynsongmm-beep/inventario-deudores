@@ -64,6 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   loadDebtors();
   loadInventory();
+  loadRate();
   initProductSearch();
 
   document.getElementById('debtorForm').addEventListener('submit', async (e) => {
@@ -361,8 +362,12 @@ async function deleteDebtor(id) {
 }
 
 async function loadInventory() {
-  const res = await fetch('/api/inventory?_=' + Date.now());
-  const items = await res.json();
+  const [invRes, rateRes] = await Promise.all([
+    fetch('/api/inventory?_=' + Date.now()),
+    fetch('/api/rate')
+  ]);
+  const items = await invRes.json();
+  const { rate } = await rateRes.json();
   items.sort((a, b) => a.name.localeCompare(b.name, 'es'));
   const container = document.getElementById('inventoryList');
   if (!container) return;
@@ -376,7 +381,7 @@ async function loadInventory() {
         <span class="item-name">${esc(item.name)}</span>
         <span class="item-qty">Cant: ${item.quantity}</span>
       </div>
-      ${item.price ? `<div class="item-price">$${item.price.toFixed(2)} c/u</div>` : ''}
+      ${item.price ? `<div class="item-price">$${item.price.toFixed(2)} c/u <span class="item-price-bs">= Bs ${(item.price * rate).toFixed(2)}</span></div>` : ''}
       <div class="item-actions">
         <button class="btn-edit" onclick="editItem('${item.id}')">Editar</button>
         <button class="btn-delete" onclick="deleteItem('${item.id}')">Eliminar</button>
@@ -597,6 +602,30 @@ function closePayHistory() {
   document.getElementById('historyModal').style.display = 'none';
 }
 document.getElementById('historyModal').addEventListener('click', (e) => { if (e.target === e.currentTarget) closePayHistory(); });
+
+async function loadRate() {
+  try {
+    const res = await fetch('/api/rate');
+    const data = await res.json();
+    const display = document.getElementById('rateDisplay');
+    const input = document.getElementById('dollarRate');
+    if (display) display.textContent = `1 USD = ${data.rate.toFixed(2)} Bs`;
+    if (input) input.value = data.rate;
+  } catch {}
+}
+
+document.getElementById('rateForm')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const rate = document.getElementById('dollarRate').value;
+  if (!rate) return;
+  await fetch('/api/rate', {
+    method: 'PUT', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ rate: parseFloat(rate) })
+  });
+  loadRate();
+  loadInventory();
+  showToast('Tasa actualizada');
+});
 
 function showToast(message, type = 'success') {
   const container = document.getElementById('toastContainer');

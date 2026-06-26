@@ -93,6 +93,7 @@ button:not(.tab):not(.filter-btn):not(.dark-toggle):not(.btn-remove):hover { bac
 .debtor-amount.paid { color: var(--success); }
 .item-qty { color: var(--text-secondary); }
 .item-price { color: var(--primary); font-weight: 600; }
+.item-price-bs { color: var(--success); font-size: 0.82rem; font-weight: 500; }
 
 .debtor-actions, .item-actions { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
 .debtor-actions input { flex: 1; padding: 8px; font-size: 0.9rem; }

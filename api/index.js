@@ -46,6 +46,8 @@ async function initDB() {
     await q('CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY, username TEXT UNIQUE NOT NULL, password TEXT NOT NULL)');
     await q('CREATE TABLE IF NOT EXISTS inventory (id TEXT PRIMARY KEY, name TEXT NOT NULL, quantity INTEGER DEFAULT 0, price REAL DEFAULT 0, createdAt TEXT)');
     await q('CREATE TABLE IF NOT EXISTS debtors (id TEXT PRIMARY KEY, name TEXT NOT NULL, amount REAL DEFAULT 0, description TEXT DEFAULT \'\', products TEXT DEFAULT \'[]\', dueDate TEXT, payments TEXT DEFAULT \'[]\', createdAt TEXT)');
+    await q('CREATE TABLE IF NOT EXISTS config (key TEXT PRIMARY KEY, value TEXT)');
+    await q(`INSERT INTO config (key, value) VALUES ('dollar_rate', '1') ON CONFLICT (key) DO NOTHING`);
     const pwd = process.env.ADMIN_PASSWORD || ('MC-' + crypto.randomBytes(4).toString('hex').toUpperCase());
     const rows = await q('SELECT * FROM users WHERE username = $1', ['admin']);
     if (rows.length === 0) {
@@ -110,6 +112,22 @@ app.get('/api/me', (req, res) => {
 });
 
 app.use('/api', requireAuth);
+
+app.get('/api/rate', async (req, res) => {
+  try {
+    const rows = await q("SELECT value FROM config WHERE key = 'dollar_rate'");
+    res.json({ rate: parseFloat(rows[0]?.value || '1') });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.put('/api/rate', async (req, res) => {
+  try {
+    const { rate } = req.body;
+    if (rate == null || isNaN(rate) || rate < 0) return res.status(400).json({ error: 'Tasa inválida' });
+    await q("UPDATE config SET value = $1 WHERE key = 'dollar_rate'", [parseFloat(rate).toFixed(2)]);
+    res.json({ rate: parseFloat(rate) });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
 
 app.get('/api/debtors', async (req, res) => {
   res.json((await q('SELECT * FROM debtors ORDER BY LOWER(name)')).map(debtorRow));
