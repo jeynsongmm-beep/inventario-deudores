@@ -158,13 +158,13 @@ async function loadDebtors() {
     const dueSoon = d.dueDate && !isOverdue && (new Date(d.dueDate) - today) / 86400000 <= 3 && d.amount > 0;
      return `<div class="debtor-card ${isOverdue ? 'overdue' : ''} ${d.amount <= 0 ? 'paid-off' : ''}">
        <div class="debtor-info">
-         <span class="debtor-name">${esc(d.name)} <span class="debtor-rate">(${(d.rate || 1).toFixed(2)})</span></span>
-          <span class="debtor-amount ${d.amount <= 0 ? 'paid' : ''}">$${d.amount.toFixed(2)} <span class="amount-bs">= Bs ${fmt(d.amount * (d.rate || 1))}</span></span>
+         <span class="debtor-name">${esc(d.name)} <span class="debtor-rate">(${(d.rate || 1).toFixed(2).replace(/\.00$/, "")})</span></span>
+          <span class="debtor-amount ${d.amount <= 0 ? 'paid' : ''}">$${d.amount.toFixed(2).replace(/\.00$/, "")} <span class="amount-bs">= Bs ${fmt(d.amount * (d.rate || 1))}</span></span>
         </div>
         ${d.dueDate ? `<div class="due-date ${isOverdue ? 'text-danger' : dueSoon ? 'text-warning' : ''}">Vence: ${new Date(d.dueDate).toLocaleDateString()}${isOverdue ? ' (VENCIDA)' : dueSoon ? ' (Pronto)' : ''}</div>` : ''}
         ${d.products && d.products.length > 0 ? `
           <div class="product-chips">
-            ${d.products.map(p => `<span class="product-chip">${esc(p.name)} x${p.quantity} - $${(p.price * p.quantity).toFixed(2)}</span>`).join('')}
+            ${d.products.map(p => `<span class="product-chip">${esc(p.name)} x${p.quantity} - $${(p.price * p.quantity).toFixed(2).replace(/\.00$/, "")}</span>`).join('')}
           </div>
         ` : ''}
         ${d.description ? `<div style="color:var(--text-secondary);font-size:0.85rem;margin-top:6px">${esc(d.description)}</div>` : ''}
@@ -183,12 +183,12 @@ async function loadDebtors() {
       html += paid.map(d => {
         return `<div class="debtor-card paid-off">
         <div class="debtor-info">
-          <span class="debtor-name">${esc(d.name)} <span class="debtor-rate">(${(d.rate || 1).toFixed(2)})</span></span>
-          <span class="debtor-amount paid">$${d.amount.toFixed(2)} <span class="amount-bs">= Bs ${fmt(d.amount * (d.rate || 1))}</span></span>
+          <span class="debtor-name">${esc(d.name)} <span class="debtor-rate">(${(d.rate || 1).toFixed(2).replace(/\.00$/, "")})</span></span>
+          <span class="debtor-amount paid">$${d.amount.toFixed(2).replace(/\.00$/, "")} <span class="amount-bs">= Bs ${fmt(d.amount * (d.rate || 1))}</span></span>
       </div>
       ${d.products && d.products.length > 0 ? `
         <div class="product-chips">
-          ${d.products.map(p => `<span class="product-chip">${esc(p.name)} x${p.quantity} - $${(p.price * p.quantity).toFixed(2)}</span>`).join('')}
+          ${d.products.map(p => `<span class="product-chip">${esc(p.name)} x${p.quantity} - $${(p.price * p.quantity).toFixed(2).replace(/\.00$/, "")}</span>`).join('')}
         </div>
       ` : ''}
       <div class="debtor-actions">
@@ -286,16 +286,16 @@ async function updateEditUI() {
     return `<div class="selected-item">
       <div class="selected-item-info">
         <span class="selected-item-name">${esc(item.name)}</span>
-        <span class="selected-item-price">$${item.price.toFixed(2)} c/u</span>
+        <span class="selected-item-price">$${item.price.toFixed(2).replace(/\.00$/, "")} c/u</span>
       </div>
       <div class="selected-item-controls">
         <input type="number" class="edit-item-qty" data-idx="${idx}" value="${item.quantity}" min="1">
-        <span class="selected-item-subtotal">$${subtotal.toFixed(2)}</span>
+        <span class="selected-item-subtotal">$${subtotal.toFixed(2).replace(/\.00$/, "")}</span>
         <button class="btn-remove" data-idx="${idx}">×</button>
       </div>
     </div>`;
   }).join('');
-  multiTotal.textContent = '$' + total.toFixed(2);
+  multiTotal.textContent = '$' + total.toFixed(2).replace(/\.00$/, "");
   container.querySelectorAll('.edit-item-qty').forEach(inp => {
     inp.addEventListener('input', () => {
       editSelectedItems[parseInt(inp.dataset.idx)].quantity = parseInt(inp.value) || 1;
@@ -319,7 +319,7 @@ function renderEditDropdown(filter) {
     : productSearchItems).filter(i => i.quantity > 0 && !editSelectedItems.some(s => s.id === i.id));
   if (filtered.length === 0) { dropdown.style.display = 'none'; return; }
   dropdown.innerHTML = filtered.map(i =>
-    `<div class="dropdown-item" data-id="${i.id}" data-name="${esc(i.name)}" data-price="${i.price}">${esc(i.name)} <small>(${i.quantity} disp. ${i.price ? '- $' + i.price.toFixed(2) : ''})</small></div>`
+    `<div class="dropdown-item" data-id="${i.id}" data-name="${esc(i.name)}" data-price="${i.price}">${esc(i.name)} <small>(${i.quantity} disp. ${i.price ? '- $' + i.price.toFixed(2).replace(/\.00$/, "") : ''})</small></div>`
   ).join('');
   dropdown.style.display = 'block';
 }
@@ -413,7 +413,7 @@ async function loadInventory() {
         <span class="item-name">${esc(item.name)}</span>
         <span class="item-qty">Cant: ${item.quantity}</span>
       </div>
-      ${item.price ? `<div class="item-price">$${item.price.toFixed(2)} c/u</div>` : ''}
+      ${item.price ? `<div class="item-price">$${item.price.toFixed(2).replace(/\.00$/, "")} c/u</div>` : ''}
       <div class="item-actions">
         <button class="btn-edit" onclick="editItem('${item.id}')">Editar</button>
         <button class="btn-delete" onclick="deleteItem('${item.id}')">Eliminar</button>
@@ -493,17 +493,17 @@ async function initProductSearch() {
       return `<div class="selected-item">
         <div class="selected-item-info">
           <span class="selected-item-name">${esc(item.name)}</span>
-          <span class="selected-item-price">$${item.price.toFixed(2)} c/u</span>
+          <span class="selected-item-price">$${item.price.toFixed(2).replace(/\.00$/, "")} c/u</span>
         </div>
         <div class="selected-item-controls">
           <input type="number" class="selected-item-qty" data-idx="${idx}" value="${item.quantity}" min="1">
-          <span class="selected-item-subtotal">$${subtotal.toFixed(2)}</span>
+          <span class="selected-item-subtotal">$${subtotal.toFixed(2).replace(/\.00$/, "")}</span>
           <button class="btn-remove" data-idx="${idx}">×</button>
         </div>
       </div>`;
     }).join('');
-    multiTotal.textContent = '$' + total.toFixed(2);
-    if (!amountManuallySet) amountInput.value = total.toFixed(2);
+    multiTotal.textContent = '$' + total.toFixed(2).replace(/\.00$/, "");
+    if (!amountManuallySet) amountInput.value = total.toFixed(2).replace(/\.00$/, "");
     container.querySelectorAll('.selected-item-qty').forEach(inp => {
       inp.addEventListener('input', () => {
         selectedItems[parseInt(inp.dataset.idx)].quantity = parseInt(inp.value) || 1;
@@ -524,7 +524,7 @@ async function initProductSearch() {
       : items).filter(i => i.quantity > 0 && !selectedItems.some(s => s.id === i.id));
     if (filtered.length === 0) { dropdown.style.display = 'none'; return; }
     dropdown.innerHTML = filtered.map(i =>
-      `<div class="dropdown-item" data-id="${i.id}" data-name="${esc(i.name)}" data-price="${i.price}">${esc(i.name)} <small>(${i.quantity} disp. ${i.price ? '- $' + i.price.toFixed(2) : ''})</small></div>`
+      `<div class="dropdown-item" data-id="${i.id}" data-name="${esc(i.name)}" data-price="${i.price}">${esc(i.name)} <small>(${i.quantity} disp. ${i.price ? '- $' + i.price.toFixed(2).replace(/\.00$/, "") : ''})</small></div>`
     ).join('');
     dropdown.style.display = 'block';
   }
@@ -557,7 +557,7 @@ async function refreshProductSearch() {
     const filtered = productSearchItems.filter(i => i.quantity > 0 && !selectedItems.some(s => s.id === i.id));
     if (filtered.length === 0) { dropdown.style.display = 'none'; return; }
     dropdown.innerHTML = filtered.map(i =>
-      `<div class="dropdown-item" data-id="${i.id}" data-name="${esc(i.name)}" data-price="${i.price}">${esc(i.name)} <small>(${i.quantity} disp. ${i.price ? '- $' + i.price.toFixed(2) : ''})</small></div>`
+      `<div class="dropdown-item" data-id="${i.id}" data-name="${esc(i.name)}" data-price="${i.price}">${esc(i.name)} <small>(${i.quantity} disp. ${i.price ? '- $' + i.price.toFixed(2).replace(/\.00$/, "") : ''})</small></div>`
     ).join('');
   }
 }
@@ -588,7 +588,7 @@ async function renderPayHistory() {
     return `<div class="history-item">
       <div class="history-item-header">
         <span class="history-num">#${idx + 1}</span>
-        <span class="history-amount">$${p.amount.toFixed(2)}</span>
+        <span class="history-amount">$${p.amount.toFixed(2).replace(/\.00$/, "")}</span>
       </div>
       <div class="history-meta">
         <span class="history-date">${new Date(p.date).toLocaleString()}</span>
@@ -601,7 +601,7 @@ async function renderPayHistory() {
       </div>
     </div>`;
   }).join('');
-  container.innerHTML += `<div class="history-total">Total abonado: <strong>$${totalPaid.toFixed(2)}</strong></div>`;
+  container.innerHTML += `<div class="history-total">Total abonado: <strong>$${totalPaid.toFixed(2).replace(/\.00$/, "")}</strong></div>`;
 }
 
 async function deletePayment(idx) {
@@ -617,7 +617,7 @@ async function editPayment(idx) {
   const debtors = await res.json();
   const d = debtors.find(x => x.id === historyDebtorId);
   if (!d || !d.payments[idx]) return;
-  const newAmount = prompt('Nuevo monto:', d.payments[idx].amount.toFixed(2));
+  const newAmount = prompt('Nuevo monto:', d.payments[idx].amount.toFixed(2).replace(/\.00$/, ""));
   if (!newAmount || parseFloat(newAmount) <= 0) return;
   const newNote = prompt('Nueva nota:', d.payments[idx].note || '');
   if (newNote === null) return;
@@ -651,7 +651,7 @@ function showToast(message, type = 'success') {
 }
 
 function fmt(n) {
-  return n.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return n.toLocaleString('es-VE', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 }
 function esc(str) {
   const div = document.createElement('div');
