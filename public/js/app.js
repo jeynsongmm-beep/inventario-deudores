@@ -115,6 +115,27 @@ document.addEventListener('DOMContentLoaded', () => {
       loadDebtors();
     });
   }
+
+  window.inventoryStatusFilter = 'all';
+  const invSearchInput = document.getElementById('inventorySearch');
+  if (invSearchInput) {
+    invSearchInput.addEventListener('input', () => {
+      window.inventoryFilter = invSearchInput.value;
+      loadInventory();
+    });
+  }
+
+  const invFilterBar = document.getElementById('inventoryFilterBar');
+  if (invFilterBar) {
+    invFilterBar.addEventListener('click', (e) => {
+      const btn = e.target.closest('.filter-btn');
+      if (!btn) return;
+      document.querySelectorAll('#inventoryFilterBar .filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      window.inventoryStatusFilter = btn.dataset.ifilter;
+      loadInventory();
+    });
+  }
 });
 
 const selectedItems = [];
@@ -404,15 +425,26 @@ async function loadInventory() {
   items.sort((a, b) => a.name.localeCompare(b.name, 'es'));
   const container = document.getElementById('inventoryList');
   if (!container) return;
-  if (items.length === 0) {
-    container.innerHTML = '<div class="empty">No hay productos en el inventario</div>';
+
+  const nameFilter = (window.inventoryFilter || '').toLowerCase();
+  const statusFilter = window.inventoryStatusFilter || 'all';
+  let filtered = items;
+  if (nameFilter) filtered = filtered.filter(i => i.name.toLowerCase().includes(nameFilter));
+  if (statusFilter !== 'all') {
+    if (statusFilter === 'stock') filtered = filtered.filter(i => i.quantity > 0);
+    if (statusFilter === 'low') filtered = filtered.filter(i => i.quantity > 0 && i.quantity <= 3);
+    if (statusFilter === 'out') filtered = filtered.filter(i => i.quantity <= 0);
+  }
+
+  if (filtered.length === 0) {
+    container.innerHTML = `<div class="empty">${items.length === 0 ? 'No hay productos en el inventario' : 'Sin resultados para la búsqueda'}</div>`;
     return;
   }
-  container.innerHTML = items.map(item => `
-    <div class="item-card">
+  container.innerHTML = filtered.map(item => `
+    <div class="item-card ${item.quantity <= 0 ? 'item-out' : item.quantity <= 3 ? 'item-low' : ''}">
       <div class="item-info">
         <span class="item-name">${esc(item.name)}</span>
-        <span class="item-qty">Cant: ${item.quantity}</span>
+        <span class="item-qty">Cant: ${item.quantity}${item.quantity <= 0 ? ' (agotado)' : item.quantity <= 3 ? ' (bajo)' : ''}</span>
       </div>
       ${item.price ? `<div class="item-price">$${item.price.toFixed(2).replace(/\.00$/, "")} c/u</div>` : ''}
       <div class="item-actions">
